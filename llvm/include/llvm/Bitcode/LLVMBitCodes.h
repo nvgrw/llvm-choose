@@ -560,6 +560,7 @@ enum FunctionCodes {
   FUNC_CODE_INST_CALLBR = 57,    // CALLBR:     [attr, cc, norm, transfs,
                                  //              fnty, fnid, args...]
   FUNC_CODE_INST_FREEZE = 58,    // FREEZE: [opty, opval]
+  FUNC_CODE_INST_CHOOSE = 59,    // CHOOSE: [opty, op0, op1, ...]
 };
 
 enum UseListCodes {

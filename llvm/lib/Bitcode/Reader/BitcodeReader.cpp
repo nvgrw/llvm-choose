@@ -4444,6 +4444,30 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       I = SI;
       break;
     }
+    case bitc::FUNC_CODE_INST_CHOOSE: { // CHOOSE: [opty, op0, op1, ...]
+      if (Record.size() < 3 || (Record.size() & 1) == 0)
+        return error("Invalid record"); // need at least 3 + odd
+      Type *OpTy = getTypeByID(Record[0]);
+      Value *Weight = getValue(Record, 1, NextValueNo, OpTy);
+      BasicBlock *Default = getBasicBlock(Record[2]);
+      if (!OpTy || !Weight || !Default)
+        return error("Invalid record");
+      unsigned NumChoices = (Record.size() - 3) / 2;
+      ChooseInst *CI = ChooseInst::Create(Weight, Default, NumChoices);
+      InstructionList.push_back(CI);
+      for (unsigned i = 0, e = NumChoices; i != e; ++i) {
+        ConstantInt *ChoiceWeight =
+            dyn_cast_or_null<ConstantInt>(getFnValueByID(Record[3+i*2], OpTy));
+        BasicBlock *DestBB = getBasicBlock(Record[1+3+i*2]);
+        if (!ChoiceWeight || !DestBB) {
+          delete CI;
+          return error("Invalid record");
+        }
+        CI->addChoice(ChoiceWeight, DestBB);
+      }
+      I = CI;
+      break;
+    }
     case bitc::FUNC_CODE_INST_INDIRECTBR: { // INDIRECTBR: [opty, op0, op1, ...]
       if (Record.size() < 2)
         return error("Invalid record");

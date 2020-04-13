@@ -2745,6 +2745,22 @@ void ModuleBitcodeWriter::writeInstruction(const Instruction &I,
       }
     }
     break;
+  case Instruction::Choose: {
+    Code = bitc::FUNC_CODE_INST_CHOOSE;
+    const ChooseInst &CI = cast<ChooseInst>(I);
+    Vals.push_back(VE.getTypeID(CI.getWeightType()));
+    bool relative = true;
+    for (auto Choice : CI.choices()) {
+      if (relative) {
+        pushValue(Choice.getChoiceWeight(), InstID, Vals);
+        relative = false;
+      } else {
+        Vals.push_back(VE.getValueID(Choice.getChoiceWeight()));
+      }
+      Vals.push_back(VE.getValueID(Choice.getChoiceSuccessor()));
+    }
+    break;
+  }
   case Instruction::IndirectBr:
     Code = bitc::FUNC_CODE_INST_INDIRECTBR;
     Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
