@@ -3518,6 +3518,310 @@ struct OperandTraits<SwitchInst> : public HungoffOperandTraits<2> {
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(SwitchInst, Value)
 
 //===----------------------------------------------------------------------===//
+//                               ChooseInst Class
+//===----------------------------------------------------------------------===//
+
+//===---------------------------------------------------------------------------
+/// Choose instruction.
+///
+class ChooseInst : public Instruction {
+  unsigned ReservedSpace;
+
+  // Operand[0]    = Weight of first block
+  // Operand[1]    = First BasicBlock to go to
+  // Operand[2n  ] = Weight of block
+  // Operand[2n+1] = BasicBlock to go to
+  ChooseInst(const ChooseInst &CI);
+
+  /// Create a new choose instruction, specifying the default weight and a
+  /// default destination. The number of additional choices can be specified
+  /// here to make memory allocation more efficient. This constructor can also
+  /// auto-insert before another instruction.
+  ChooseInst(Value *Weight, BasicBlock *Default, unsigned NumChoices,
+             Instruction *InsertBefore);
+
+  /// Create a new choose instruction, specifying the default weight and a
+  /// default destination. The number of additional choices can be specified
+  /// here to make memory allocation more efficient. This constructor also
+  /// auto-inserts at the end of the specified BasicBlock.
+  ChooseInst(Value *Weight, BasicBlock *Default, unsigned NumChoices,
+             BasicBlock *InsertAtEnd);
+
+  // allocate space for exactly zero operands
+  void *operator new(size_t s) {
+    return User::operator new(s);
+  }
+
+  void init(Value *Weight, BasicBlock *Default, unsigned NumReserved);
+  void growOperands();
+
+protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+
+  ChooseInst *closeImpl() const;
+
+public:
+  // -2
+  static const unsigned DefaultPseudoIndex = static_cast<unsigned>(~0L-1);
+
+  template <typename ChoiceHandleT> class ChoiceIteratorImpl;
+
+  /// A handle to a particular choice. It exposes a convenient interface to both
+  /// the choice value and the successor block.
+  ///
+  /// We define this as a template and instantiate it to form both a const and
+  /// non-const handle.
+  template <typename ChooseInstT, typename ConstantIntT, typename BasicBlockT>
+  class ChoiceHandleImpl {
+    // Directly befriend both const and non-const iterators.
+    friend class ChooseInst::ChoiceIteratorImpl<
+        ChoiceHandleImpl<ChooseInstT, ConstantIntT, BasicBlockT>>;
+
+  protected:
+    // Expose the choose type we're parameterized with to the iterator.
+    using ChooseInstType = ChooseInstT;
+
+    ChooseInstT *CI;
+    ptrdiff_t Index;
+
+    ChoiceHandleImpl() = default;
+    ChoiceHandleImpl(ChooseInstT *CI, ptrdiff_t Index) : CI(CI), Index(Index) {}
+
+  public:
+    /// Resolves weight for current choice.
+    ConstantIntT *getChoiceWeight() const {
+      assert((unsigned)Index < CI->getNumChoices() &&
+             "Index greater than number of choices.");
+      return reinterpret_cast<ConstantIntT *>(CI->getOperand(Index * 2));
+    }
+
+    /// Resolves successor for current choice.
+    BasicBlockT *getChoiceSuccessor() const {
+      assert(((unsigned)Index < CI->getNumChoices() ||
+              (unsigned)Index == DefaultPseudoIndex) &&
+             "Index greater than number of choices.");
+      return CI->getSuccessor(getSuccessorIndex());
+    }
+
+    /// Returns number of current choice.
+    unsigned getChoiceIndex() const { return Index; }
+
+    /// Returns successor index for current choice successor.
+    unsigned getSuccessorIndex() const {
+      assert(((unsigned)Index == DefaultPseudoIndex ||
+              (unsigned)Index < CI->getNumChoices()) &&
+             "Index greater than number of choices.");
+      return (unsigned)Index != DefaultPseudoIndex ? Index + 1 : 0;
+    }
+
+    bool operator==(const ChoiceHandleImpl &RHS) const {
+      assert(CI == RHS.CI && "Incompatible operators.");
+      return Index == RHS.Index;
+    }
+  };
+
+  using ConstChoiceHandle =
+      ChoiceHandleImpl<const ChooseInst, const ConstantInt, const BasicBlock>;
+
+  class ChoiceHandle
+      : public ChoiceHandleImpl<ChooseInst, ConstantInt, BasicBlock> {
+    friend class ChooseInst::ChoiceIteratorImpl<ChoiceHandle>;
+
+  public:
+    ChoiceHandle(ChooseInst *CI, ptrdiff_t Index) : ChoiceHandleImpl(CI, Index) {}
+
+    /// Sets the new value for current choice.
+    void setWeight(ConstantInt *V) {
+      assert((unsigned)Index < CI->getNumChoices() &&
+             "Index greater than number of choices.");
+      CI->setOperand(Index * 2, reinterpret_cast<Value *>(V));
+    }
+
+    void setSuccessor(BasicBlock *S) {
+      CI->setSuccessor(getSuccessorIndex(), S);
+    }
+  };
+
+  template <typename ChoiceHandleT>
+  class ChoiceIteratorImpl
+      : public iterator_facade_base<ChoiceIteratorImpl<ChoiceHandleT>,
+                                    std::random_access_iterator_tag,
+                                    ChoiceHandleT> {
+    using ChooseInstT = typename ChoiceHandleT::ChooseInstType;
+
+    ChoiceHandleT Choice;
+
+  public:
+    /// Default constructed iterator is in an invalid state until assigned to a
+    /// choice for a particular choose.
+    ChoiceIteratorImpl() = default;
+
+    /// Initializes choice iterator for given ChooseInst and for given choice
+    /// number.
+    ChoiceIteratorImpl(ChooseInstT *CI, unsigned ChoiceNum)
+        : Choice(CI, ChoiceNum) {}
+
+    /// Initializes choice iterator for given ChooseInst and for given successor
+    /// index.
+    static ChoiceIteratorImpl fromSuccessorIndex(ChooseInstT *CI,
+                                                 unsigned SuccessorIndex) {
+      assert(SuccessorIndex < CI->getNumSuccessors() &&
+             "Successor index # out of range!");
+      return SuccessorIndex != 0 ? ChoiceIteratorImpl(CI, SuccessorIndex - 1)
+                                 : ChoiceIteratorImpl(CI, DefaultPseudoIndex);
+    }
+
+    /// Support converting to the const variant. This will be a no-op for const
+    /// variant.
+    operator ChoiceIteratorImpl<ConstChoiceHandle>() const {
+      return ChoiceIteratorImpl<ConstChoiceHandle>(Choice.CI, Choice.Index);
+    }
+
+    ChoiceIteratorImpl &operator+=(ptrdiff_t N) {
+      // Check index correctness after addition.
+      // Note: Index == getNumChoices() means end().
+      assert(Choice.Index + N >= 0 &&
+             (unsigned)(Choice.Index + N) <= Choice.CI->getNumChoices() &&
+             "Choice.Index out the number of choices.");
+      Choice.Index += N;
+      return *this;
+    }
+    ChoiceIteratorImpl &operator-=(ptrdiff_t N) {
+      // Check index correctness after subtraction.
+      // Note: Choice.Index == getNumChoices() means end().
+      assert(Choice.Index - N >= 0 &&
+             (unsigned)(Choice.Index - N) <= Choice.CI->getNumChoices() &&
+             "Choice.Index out the number of choices.");
+      Choice.Index -= N;
+      return *this;
+    }
+    ptrdiff_t operator-(const ChoiceIteratorImpl &RHS) const {
+      assert(Choice.CI == RHS.Choice.CI && "Incompatible operators.");
+      return Choice.Index - RHS.Choice.Index;
+    }
+    bool operator==(const ChoiceIteratorImpl &RHS) const {
+      return Choice == RHS.Choice;
+    }
+    bool operator<(const ChoiceIteratorImpl &RHS) const {
+      assert(Choice.CI == RHS.Choice.CI && "Incompatible operators.");
+      return Choice.Index < RHS.Choice.Index;
+    }
+    ChoiceHandleT &operator*() { return Choice; }
+    const ChoiceHandleT &operator*() const { return Choice; }
+  };
+
+  using ChoiceIt = ChoiceIteratorImpl<ChoiceHandle>;
+  using ConstChoiceIt = ChoiceIteratorImpl<ConstChoiceHandle>;
+
+  static ChooseInst *Create(Value *Weight, BasicBlock *Default,
+                            unsigned NumChoices,
+                            Instruction *InsertBefore = nullptr) {
+    return new ChooseInst(Weight, Default, NumChoices, InsertBefore);
+  }
+
+  static ChooseInst *Create(Value *Weight, BasicBlock *Default,
+                            unsigned NumChoices, BasicBlock *InsertAtEnd) {
+    return new ChooseInst(Weight, Default, NumChoices, InsertAtEnd);
+  }
+
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
+  Type *getWeightType() const { return getOperand(0)->getType(); }
+//  Value *getWeight() const { return getOperand(0); }
+//  void setWeight(Value *V) { setOperand(0, V); }
+//
+//  BasicBlock *getDefaultDest() const {
+//    return cast<BasicBlock>(getOperand(1));
+//  }
+//  void setDefaultDest(BasicBlock *Default) {
+//    setOperand(1, reinterpret_cast<Value *>(Default));
+//  }
+
+  /// Return the number of choices in this choose instruction, includes the
+  /// first choice.
+  unsigned getNumChoices() const { return getNumOperands() / 2; }
+
+  /// Returns a read/write iterator that points to the first choice in the
+  /// ChooseInst.
+  ChoiceIt choice_begin() { return ChoiceIt(this, 0); }
+
+  /// Returns a read-only iterator that points to the first choice in the
+  /// ChooseInst.
+  ConstChoiceIt choice_begin() const { return ConstChoiceIt(this, 0); }
+
+  /// Returns a read/write iterator that points one past the last in the
+  /// ChooseInst.
+  ChoiceIt choice_end() { return ChoiceIt(this, getNumChoices()); }
+
+  /// Returns a read-only iterator that points one past the last in the
+  /// ChooseInst.
+  ConstChoiceIt choice_end() const {
+    return ConstChoiceIt(this, getNumChoices());
+  }
+
+  /// Iteration adapter for range-for loops.
+  iterator_range<ChoiceIt> choices() {
+    return make_range(choice_begin(), choice_end());
+  }
+
+  /// Constant iteration adapter for range-for loops.
+  iterator_range<ChoiceIt> choices() const {
+    return make_range(choice_begin(), choice_end());
+  }
+
+  /// Returns an iterator that points to the first choice.
+  /// Note: this iterator allows to resolve successor only. Attempts to resolve
+  /// choice weight causes an assertion. Also note, that increment and decrement
+  /// also cause an assertion and make the iterator invalid.
+  ChoiceIt choice_default() {
+    return ChoiceIt(this, DefaultPseudoIndex);
+  }
+  ConstChoiceIt choice_default() const {
+    return ConstChoiceIt(this, DefaultPseudoIndex);
+  }
+
+  /// Add an entry to the choose instruction.
+  /// Note:
+  /// This action invalidates choice_end(). Old choice_end() iterator will
+  /// point to the added choice.
+  void addChoice(ConstantInt *Weight, BasicBlock *Dest);
+
+  /// This method removes the specified choice and its successor from the choose
+  /// instruction. Note that this operation may reorder the remaining choices at
+  /// index idx and above.
+  /// Note:
+  /// This action invalidates iterators for all choices following the one
+  /// removed, including the choice_end() iterator(). It returns an iterator for
+  /// the next choice.
+  ChoiceIt removeChoice(ChoiceIt I);
+
+  unsigned getNumSuccessors() const { return getNumOperands() / 2; }
+  BasicBlock *getSuccessor(unsigned idx) const {
+    assert(idx < getNumSuccessors() &&
+           "Successor idx out of range for choose!");
+    return cast<BasicBlock>(getOperand(idx * 2 + 1));
+  }
+  void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
+    assert(idx < getNumSuccessors() && "Successor # out of range for choose");
+    setOperand(idx * 2 + 1, NewSucc);
+  }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::Choose;
+  }
+  static bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+template <>
+struct OperandTraits<ChooseInst> : public HungoffOperandTraits<2> {};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ChooseInst, Value);
+
+//===----------------------------------------------------------------------===//
 //                             IndirectBrInst Class
 //===----------------------------------------------------------------------===//
 
