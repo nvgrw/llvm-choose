@@ -3728,15 +3728,15 @@ public:
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
   Type *getWeightType() const { return getOperand(0)->getType(); }
-//  Value *getWeight() const { return getOperand(0); }
-//  void setWeight(Value *V) { setOperand(0, V); }
-//
-//  BasicBlock *getDefaultDest() const {
-//    return cast<BasicBlock>(getOperand(1));
-//  }
-//  void setDefaultDest(BasicBlock *Default) {
-//    setOperand(1, reinterpret_cast<Value *>(Default));
-//  }
+  Value *getWeight() const { return getOperand(0); }
+  void setWeight(Value *V) { setOperand(0, V); }
+
+  BasicBlock *getDefaultDest() const {
+    return cast<BasicBlock>(getOperand(1));
+  }
+  void setDefaultDest(BasicBlock *Default) {
+    setOperand(1, reinterpret_cast<Value *>(Default));
+  }
 
   /// Return the number of choices in this choose instruction, includes the
   /// first choice.

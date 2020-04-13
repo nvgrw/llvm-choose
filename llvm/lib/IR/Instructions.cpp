@@ -4005,6 +4005,105 @@ SwitchInstProfUpdateWrapper::getSuccessorWeight(const SwitchInst &SI,
 }
 
 //===----------------------------------------------------------------------===//
+//                        ChooseInst Implementation
+//===----------------------------------------------------------------------===//
+
+void ChooseInst::init(Value *Weight, BasicBlock *Default,
+                      unsigned NumReserved) {
+  assert(Weight && Default && NumReserved);
+  ReservedSpace = NumReserved;
+  setNumHungOffUseOperands(2);
+  allocHungoffUses(ReservedSpace);
+
+  Op<0>() = Weight;
+  Op<1>() = Default;
+}
+
+/// ChooseInst ctor - Create a new choose instruction, specifying the default
+/// weight and a default destination. The number of additional choices can be
+/// specified here to make memory allocation more efficient. This constructor
+/// can also auto-insert before another instruction.
+ChooseInst::ChooseInst(Value *Weight, BasicBlock *Default, unsigned NumChoices,
+                       Instruction *InsertBefore)
+    : Instruction(Type::getVoidTy(Weight->getContext()), Instruction::Choose,
+                  nullptr, 0, InsertBefore) {
+  init(Weight, Default, 2 + NumChoices * 2);
+}
+
+/// ChooseInst ctor - Create a new choose instruction, specifying the default
+/// weight and a default destination. The number of additional choices can be
+/// specified here to make memory allocation more efficient. This constructor
+/// also auto-inserts at the end of the specified BasicBlock.
+ChooseInst::ChooseInst(Value *Weight, BasicBlock *Default, unsigned NumChoices,
+                       BasicBlock *InsertAtEnd)
+    : Instruction(Type::getVoidTy(Weight->getContext()), Instruction::Choose,
+                  nullptr, 0, InsertAtEnd) {
+  init(Weight, Default, 2 + NumChoices * 2);
+}
+
+ChooseInst::ChooseInst(const ChooseInst &CI)
+    : Instruction(CI.getType(), Instruction::Choose, nullptr, 0) {
+  init(CI.getWeight(), CI.getDefaultDest(), CI.getNumOperands());
+  setNumHungOffUseOperands(CI.getNumOperands());
+  Use *OL = getOperandList();
+  const Use *InOL = CI.getOperandList();
+  for (unsigned i = 2, E = CI.getNumOperands(); i != E; i += 2) {
+    OL[i] = InOL[i];
+    OL[i + 1] = InOL[i + 1];
+  }
+  SubclassOptionalData = CI.SubclassOptionalData;
+}
+
+//// addChoice - Add an entry to the choose instruction...
+///
+void ChooseInst::addChoice(ConstantInt *Weight, BasicBlock *Dest) {
+  unsigned NewChoiceIdx = getNumChoices() - 1; // exclude default
+  unsigned OpNo = getNumOperands();
+  if (OpNo + 2 > ReservedSpace)
+    growOperands(); // Get more space!
+  // Initialize some new operands
+  assert(OpNo + 1 < ReservedSpace && "Growing didn't work!");
+  setNumHungOffUseOperands(OpNo + 2);
+  ChoiceHandle Choice(this, NewChoiceIdx);
+  Choice.setWeight(Weight);
+  Choice.setSuccessor(Dest);
+}
+
+/// removeChoice - This method removes the specified choice and its successor
+/// from the choose instruction.
+ChooseInst::ChoiceIt ChooseInst::removeChoice(ChoiceIt I) {
+    unsigned idx = I->getChoiceIndex();
+
+    assert(2 + idx * 2 < getNumOperands() && "Case index out of range!!!");
+
+    unsigned NumOps = getNumOperands();
+    Use *OL = getOperandList();
+
+    // Overwrite this case with the end of the list.
+    if (2 + (idx + 1) * 2 != NumOps) {
+        OL[2 + idx * 2] = OL[NumOps - 2];
+        OL[2 + idx * 2 + 1] = OL[NumOps - 1];
+    }
+
+    // Nuke the last value.
+    OL[NumOps-2].set(nullptr);
+    OL[NumOps-2+1].set(nullptr);
+    setNumHungOffUseOperands(NumOps-2);
+
+    return ChoiceIt(this, idx);
+}
+
+/// growOperands - grow operands - This grows the operand list in response
+/// to a push_back style of operation.  This grows the number of ops by 3 times.
+void ChooseInst::growOperands() {
+  unsigned e = getNumOperands();
+  unsigned NumOps = e * 3;
+
+  ReservedSpace = NumOps;
+  growHungoffUses(ReservedSpace);
+}
+
+//===----------------------------------------------------------------------===//
 //                        IndirectBrInst Implementation
 //===----------------------------------------------------------------------===//
 
