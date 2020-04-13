@@ -3416,7 +3416,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
     ID.Kind = ValID::t_Constant;
     return false;
   }
- 
+
   // Unary Operators.
   case lltok::kw_fneg: {
     unsigned Opc = Lex.getUIntVal();
@@ -3426,7 +3426,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
         ParseGlobalTypeAndValue(Val) ||
         ParseToken(lltok::rparen, "expected ')' in unary constantexpr"))
       return true;
-    
+
     // Check that the type is valid for the operator.
     switch (Opc) {
     case Instruction::FNeg:
@@ -4762,7 +4762,7 @@ bool LLParser::ParseDICommonBlock(MDNode *&Result, bool IsDistinct) {
   OPTIONAL(declaration, MDField, );                                            \
   OPTIONAL(name, MDStringField, );                                             \
   OPTIONAL(file, MDField, );                                                   \
-  OPTIONAL(line, LineField, );						       
+  OPTIONAL(line, LineField, );
   PARSE_MD_FIELDS();
 #undef VISIT_MD_FIELDS
 
@@ -5707,6 +5707,7 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_ret:         return ParseRet(Inst, BB, PFS);
   case lltok::kw_br:          return ParseBr(Inst, PFS);
   case lltok::kw_switch:      return ParseSwitch(Inst, PFS);
+  case lltok::kw_choose:      return ParseChoose(Inst, PFS);
   case lltok::kw_indirectbr:  return ParseIndirectBr(Inst, PFS);
   case lltok::kw_invoke:      return ParseInvoke(Inst, PFS);
   case lltok::kw_resume:      return ParseResume(Inst, PFS);
@@ -5995,6 +5996,50 @@ bool LLParser::ParseSwitch(Instruction *&Inst, PerFunctionState &PFS) {
   for (unsigned i = 0, e = Table.size(); i != e; ++i)
     SI->addCase(Table[i].first, Table[i].second);
   Inst = SI;
+  return false;
+}
+
+/// ParseChoose
+///  Instruction
+///    ::= 'choose' TypeAndValue ',' TypeAndValue '[' ProbTable ']'
+///  ProbTable
+///    ::= (TypeAndValue ',' TypeAndValue)*
+bool LLParser::ParseChoose(Instruction *&Inst, PerFunctionState &PFS) {
+  LocTy WeightLoc, BBLoc;
+  Value *DefaultWeight;
+  BasicBlock *DefaultBB;
+  if (ParseTypeAndValue(DefaultWeight, WeightLoc, PFS) ||
+      ParseToken(lltok::comma, "expected ',' after choose weight") ||
+      ParseTypeAndBasicBlock(DefaultBB, BBLoc, PFS) ||
+      ParseToken(lltok::lsquare, "expected '[' with choose table"))
+    return true;
+
+  if (!isa<ConstantInt>(DefaultWeight))
+    return Error(WeightLoc, "weight is not a constant integer");
+
+  // Parse the choice table pairs
+  SmallVector<std::pair<ConstantInt*, BasicBlock*>, 32> Table;
+  while (Lex.getKind() != lltok::rsquare) {
+    Value *Weight;
+    BasicBlock *DestBB;
+
+    if (ParseTypeAndValue(Weight, WeightLoc, PFS) ||
+        ParseToken(lltok::comma, "expected ',' after choose weight") ||
+        ParseTypeAndBasicBlock(DestBB, PFS))
+      return true;
+
+    if (!isa<ConstantInt>(Weight))
+      return Error(WeightLoc, "weight is not a constant integer");
+
+    Table.push_back(std::make_pair(cast<ConstantInt>(Weight), DestBB));
+  }
+
+  Lex.Lex();  // Eat the ']'.
+
+  ChooseInst *CI = ChooseInst::Create(DefaultWeight, DefaultBB, Table.size());
+  for (unsigned i = 0, e = Table.size(); i != e; ++i)
+    CI->addChoice(Table[i].first, Table[i].second);
+  Inst = CI;
   return false;
 }
 
