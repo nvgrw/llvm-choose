@@ -3766,7 +3766,7 @@ public:
   }
 
   /// Constant iteration adapter for range-for loops.
-  iterator_range<ChoiceIt> choices() const {
+  iterator_range<ConstChoiceIt> choices() const {
     return make_range(choice_begin(), choice_end());
   }
 
