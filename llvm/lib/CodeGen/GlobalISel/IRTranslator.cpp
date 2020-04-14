@@ -834,6 +834,11 @@ bool IRTranslator::lowerSwitchWorkItem(SwitchCG::SwitchWorkListItem W,
   return true;
 }
 
+bool IRTranslator::translateChoose(const User &U,
+                                   MachineIRBuilder &MIRBuilder) {
+  assert(false); // TODO(nvgrw): implement
+}
+
 bool IRTranslator::translateIndirectBr(const User &U,
                                        MachineIRBuilder &MIRBuilder) {
   const IndirectBrInst &BrInst = cast<IndirectBrInst>(U);

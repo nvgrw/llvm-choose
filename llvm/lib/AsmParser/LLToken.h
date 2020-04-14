@@ -328,6 +328,7 @@ enum Kind {
   kw_ret,
   kw_br,
   kw_switch,
+  kw_choose,
   kw_indirectbr,
   kw_invoke,
   kw_resume,

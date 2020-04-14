@@ -60,6 +60,7 @@ typedef enum {
   LLVMRet            = 1,
   LLVMBr             = 2,
   LLVMSwitch         = 3,
+  LLVMChoose         = 69,
   LLVMIndirectBr     = 4,
   LLVMInvoke         = 5,
   /* removed 6 due to API changes */

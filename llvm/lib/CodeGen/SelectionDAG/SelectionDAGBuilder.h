@@ -651,6 +651,7 @@ private:
   void visitRet(const ReturnInst &I);
   void visitBr(const BranchInst &I);
   void visitSwitch(const SwitchInst &I);
+  void visitChoose(const ChooseInst &I);
   void visitIndirectBr(const IndirectBrInst &I);
   void visitUnreachable(const UnreachableInst &I);
   void visitCleanupRet(const CleanupReturnInst &I);

@@ -10637,6 +10637,10 @@ void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
   }
 }
 
+void SelectionDAGBuilder::visitChoose(const ChooseInst &I) {
+  assert(false); // TODO(nvgrw): implement visitChoose
+}
+
 void SelectionDAGBuilder::visitFreeze(const FreezeInst &I) {
   SDValue N = getValue(I.getOperand(0));
   setValue(&I, N);

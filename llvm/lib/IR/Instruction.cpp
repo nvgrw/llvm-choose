@@ -295,6 +295,7 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case Ret:    return "ret";
   case Br:     return "br";
   case Switch: return "switch";
+  case Choose: return "choose";
   case IndirectBr: return "indirectbr";
   case Invoke: return "invoke";
   case Resume: return "resume";
