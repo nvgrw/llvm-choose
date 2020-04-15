@@ -4074,12 +4074,12 @@ void ChooseInst::addChoice(ConstantInt *Weight, BasicBlock *Dest) {
 ChooseInst::ChoiceIt ChooseInst::removeChoice(ChoiceIt I) {
     unsigned idx = I->getChoiceIndex();
 
-    assert(2 + idx * 2 < getNumOperands() && "Case index out of range!!!");
+    assert(2 + idx * 2 < getNumOperands() && "Choice index out of range!!!");
 
     unsigned NumOps = getNumOperands();
     Use *OL = getOperandList();
 
-    // Overwrite this case with the end of the list.
+    // Overwrite this choice with the end of the list.
     if (2 + (idx + 1) * 2 != NumOps) {
         OL[2 + idx * 2] = OL[NumOps - 2];
         OL[2 + idx * 2 + 1] = OL[NumOps - 1];
