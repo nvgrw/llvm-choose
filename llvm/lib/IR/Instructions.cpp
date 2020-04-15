@@ -4057,7 +4057,7 @@ ChooseInst::ChooseInst(const ChooseInst &CI)
 //// addChoice - Add an entry to the choose instruction...
 ///
 void ChooseInst::addChoice(ConstantInt *Weight, BasicBlock *Dest) {
-  unsigned NewChoiceIdx = getNumChoices() - 1; // exclude default
+  unsigned NewChoiceIdx = getNumChoices();// - 1; // exclude default
   unsigned OpNo = getNumOperands();
   if (OpNo + 2 > ReservedSpace)
     growOperands(); // Get more space!
@@ -4072,6 +4072,7 @@ void ChooseInst::addChoice(ConstantInt *Weight, BasicBlock *Dest) {
 /// removeChoice - This method removes the specified choice and its successor
 /// from the choose instruction.
 ChooseInst::ChoiceIt ChooseInst::removeChoice(ChoiceIt I) {
+    // TODO(nvgrw): adapt to new index scheme
     unsigned idx = I->getChoiceIndex();
 
     assert(2 + idx * 2 < getNumOperands() && "Choice index out of range!!!");

@@ -3563,7 +3563,7 @@ protected:
 
 public:
   // -2
-  static const unsigned DefaultPseudoIndex = static_cast<unsigned>(~0L-1);
+//  static const unsigned DefaultPseudoIndex = static_cast<unsigned>(~0L-1);
 
   template <typename ChoiceHandleT> class ChoiceIteratorImpl;
 
@@ -3598,10 +3598,9 @@ public:
 
     /// Resolves successor for current choice.
     BasicBlockT *getChoiceSuccessor() const {
-      assert(((unsigned)Index < CI->getNumChoices() ||
-              (unsigned)Index == DefaultPseudoIndex) &&
+      assert(((unsigned)Index < CI->getNumChoices()) &&
              "Index greater than number of choices.");
-      return CI->getSuccessor(getSuccessorIndex());
+      return CI->getSuccessor(getSuccessorIndex() - 1);
     }
 
     /// Returns number of current choice.
@@ -3609,10 +3608,9 @@ public:
 
     /// Returns successor index for current choice successor.
     unsigned getSuccessorIndex() const {
-      assert(((unsigned)Index == DefaultPseudoIndex ||
-              (unsigned)Index < CI->getNumChoices()) &&
+      assert(((unsigned)Index < CI->getNumChoices()) &&
              "Index greater than number of choices.");
-      return (unsigned)Index != DefaultPseudoIndex ? Index + 1 : 0;
+      return (unsigned)Index + 1;
     }
 
     bool operator==(const ChoiceHandleImpl &RHS) const {
@@ -3639,7 +3637,7 @@ public:
     }
 
     void setSuccessor(BasicBlock *S) {
-      CI->setSuccessor(getSuccessorIndex(), S);
+      CI->setSuccessor(getSuccessorIndex() - 1, S);
     }
   };
 
@@ -3668,8 +3666,7 @@ public:
                                                  unsigned SuccessorIndex) {
       assert(SuccessorIndex < CI->getNumSuccessors() &&
              "Successor index # out of range!");
-      return SuccessorIndex != 0 ? ChoiceIteratorImpl(CI, SuccessorIndex - 1)
-                                 : ChoiceIteratorImpl(CI, DefaultPseudoIndex);
+      return ChoiceIteratorImpl(CI, SuccessorIndex);
     }
 
     /// Support converting to the const variant. This will be a no-op for const
@@ -3771,15 +3768,10 @@ public:
   }
 
   /// Returns an iterator that points to the first choice.
-  /// Note: this iterator allows to resolve successor only. Attempts to resolve
-  /// choice weight causes an assertion. Also note, that increment and decrement
-  /// also cause an assertion and make the iterator invalid.
-  ChoiceIt choice_default() {
-    return ChoiceIt(this, DefaultPseudoIndex);
-  }
-  ConstChoiceIt choice_default() const {
-    return ConstChoiceIt(this, DefaultPseudoIndex);
-  }
+  /// Note: increment and decrement
+  /// cause an assertion and make the iterator invalid.
+  ChoiceIt choice_default() { return ChoiceIt(this, 0); }
+  ConstChoiceIt choice_default() const { return ConstChoiceIt(this, 0); }
 
   /// Add an entry to the choose instruction.
   /// Note:
