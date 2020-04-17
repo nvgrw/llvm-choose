@@ -3586,6 +3586,8 @@ LLVMValueRef LLVMBuildCondBr(LLVMBuilderRef, LLVMValueRef If,
                              LLVMBasicBlockRef Then, LLVMBasicBlockRef Else);
 LLVMValueRef LLVMBuildSwitch(LLVMBuilderRef, LLVMValueRef V,
                              LLVMBasicBlockRef Else, unsigned NumCases);
+LLVMValueRef LLVMBuildChoose(LLVMBuilderRef, LLVMValueRef W,
+                             LLVMBasicBlockRef BB, unsigned NumChoices);
 LLVMValueRef LLVMBuildIndirectBr(LLVMBuilderRef B, LLVMValueRef Addr,
                                  unsigned NumDests);
 // LLVMBuildInvoke is deprecated in favor of LLVMBuildInvoke2, in preparation
@@ -3622,6 +3624,10 @@ LLVMValueRef LLVMBuildCatchSwitch(LLVMBuilderRef B, LLVMValueRef ParentPad,
 /* Add a case to the switch instruction */
 void LLVMAddCase(LLVMValueRef Switch, LLVMValueRef OnVal,
                  LLVMBasicBlockRef Dest);
+
+/* Add a choice to the choose instruction */
+void LLVMAddChoice(LLVMValueRef Choose, LLVMValueRef Weight,
+                   LLVMBasicBlockRef Dest);
 
 /* Add a destination to the indirectbr instruction */
 void LLVMAddDestination(LLVMValueRef IndirectBr, LLVMBasicBlockRef Dest);

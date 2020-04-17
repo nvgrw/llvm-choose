@@ -1004,6 +1004,17 @@ public:
                                     BranchWeights, Unpredictable));
   }
 
+  /// Create a choose instruction with the specified weight, basic block, and
+  /// with a hint for the number of choices that will be added (for efficient
+  /// allocation).
+  ChooseInst *CreateChoose(ConstantInt *W, BasicBlock *Dest,
+                           unsigned NumChoices = 2,
+                           MDNode *BranchWeights = nullptr,
+                           MDNode *Unpredictable = nullptr) {
+    return Insert(addBranchMetadata(ChooseInst::Create(W, Dest, NumChoices),
+                                    BranchWeights, Unpredictable));
+  }
+
   /// Create an indirect branch instruction with the specified address
   /// operand, with an optional hint for the number of destinations that will be
   /// added (for efficient allocation).

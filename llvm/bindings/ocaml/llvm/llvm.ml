@@ -1171,6 +1171,8 @@ external build_cond_br : llvalue -> llbasicblock -> llbasicblock -> llbuilder ->
                          llvalue = "llvm_build_cond_br"
 external build_switch : llvalue -> llbasicblock -> int -> llbuilder -> llvalue
                       = "llvm_build_switch"
+external build_choose : llvalue -> llbasicblock -> int -> llbuilder -> llvalue
+                      = "llvm_build_choose"
 external build_malloc : lltype -> string -> llbuilder -> llvalue =
     "llvm_build_malloc"
 external build_array_malloc : lltype -> llvalue -> string -> llbuilder ->
@@ -1180,6 +1182,8 @@ external add_case : llvalue -> llvalue -> llbasicblock -> unit
                   = "llvm_add_case"
 external switch_default_dest : llvalue -> llbasicblock =
     "LLVMGetSwitchDefaultDest"
+external add_choice : llvalue -> llvalue -> llbasicblock -> unit
+                    = "llvm_add_choice"
 external build_indirect_br : llvalue -> int -> llbuilder -> llvalue
                            = "llvm_build_indirect_br"
 external add_destination : llvalue -> llbasicblock -> unit

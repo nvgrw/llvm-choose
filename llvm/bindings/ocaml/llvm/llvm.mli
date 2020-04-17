@@ -2048,6 +2048,13 @@ val build_cond_br : llvalue -> llbasicblock -> llbasicblock -> llbuilder ->
     See the method [llvm::LLVMBuilder::CreateSwitch]. *)
 val build_switch : llvalue -> llbasicblock -> int -> llbuilder -> llvalue
 
+(** [build_choose weight bb count b] creates an empty
+    [choose %weight, %bb]
+    instruction at the position specified by the instruction builder [b] with
+    space reserved for [count] additional choices.
+    See the method [llvm::LLVMBuilder::CreateChoose]. *)
+val build_choose : llvalue -> llbasicblock -> int -> llbuilder -> llvalue
+
 (** [build_malloc ty name b] creates an [malloc]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::CallInst::CreateMalloc]. *)
@@ -2072,6 +2079,11 @@ val add_case : llvalue -> llvalue -> llbasicblock -> unit
     instruction.
     See the method [llvm:;SwitchInst::getDefaultDest]. **)
 val switch_default_dest : llvalue -> llbasicblock
+
+(** [add_choice ch weight bb] causes choose instruction [ch] to branch to [bb]
+    with a weight of [weight].
+    See the method [llvm::ChooseInst::addChoice]. **)
+val add_choice : llvalue -> llvalue -> llbasicblock -> unit
 
 (** [build_indirect_br addr count b] creates a
     [indirectbr %addr]

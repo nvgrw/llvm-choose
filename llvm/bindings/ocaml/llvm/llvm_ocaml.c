@@ -1850,6 +1850,14 @@ CAMLprim LLVMValueRef llvm_build_switch(LLVMValueRef Of,
   return LLVMBuildSwitch(Builder_val(B), Of, Else, Int_val(EstimatedCount));
 }
 
+/* llvalue -> llbasicblock -> int -> llbuilder -> llvalue */
+CAMLprim LLVMValueRef llvm_build_choose(LLVMValueRef Weight,
+                                        LLVMBasicBlockRef BB,
+                                        value EstimatedCount,
+                                        value B) {
+  return LLVMBuildSwitch(Builder_val(B), Weight, BB, Int_val(EstimatedCount));
+}
+
 /* lltype -> string -> llbuilder -> llvalue */
 CAMLprim LLVMValueRef llvm_build_malloc(LLVMTypeRef Ty, value Name,
                                         value B)
@@ -1875,6 +1883,13 @@ CAMLprim LLVMValueRef llvm_build_free(LLVMValueRef P, value B)
 CAMLprim value llvm_add_case(LLVMValueRef Switch, LLVMValueRef OnVal,
                              LLVMBasicBlockRef Dest) {
   LLVMAddCase(Switch, OnVal, Dest);
+  return Val_unit;
+}
+
+/* llvalue -> llvalue -> llbasicblock -> unit */
+CAMLprim value llvm_add_choice(LLVMValueRef Choose, LLVMValueRef Weight,
+                               LLVMBasicBlockRef Dest) {
+  LLVMAddChoice(Choose, Weight, Dest);
   return Val_unit;
 }
 

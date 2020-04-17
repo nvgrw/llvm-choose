@@ -3100,6 +3100,11 @@ LLVMValueRef LLVMBuildSwitch(LLVMBuilderRef B, LLVMValueRef V,
   return wrap(unwrap(B)->CreateSwitch(unwrap(V), unwrap(Else), NumCases));
 }
 
+LLVMValueRef LLVMBuildChoose(LLVMBuilderRef B, LLVMValueRef W,
+                             LLVMBasicBlockRef BB, unsigned NumChoices) {
+  return wrap(unwrap(B)->CreateChoose(unwrap<ConstantInt>(W), unwrap(BB), NumChoices));
+}
+
 LLVMValueRef LLVMBuildIndirectBr(LLVMBuilderRef B, LLVMValueRef Addr,
                                  unsigned NumDests) {
   return wrap(unwrap(B)->CreateIndirectBr(unwrap(Addr), NumDests));
@@ -3193,6 +3198,12 @@ LLVMValueRef LLVMBuildUnreachable(LLVMBuilderRef B) {
 void LLVMAddCase(LLVMValueRef Switch, LLVMValueRef OnVal,
                  LLVMBasicBlockRef Dest) {
   unwrap<SwitchInst>(Switch)->addCase(unwrap<ConstantInt>(OnVal), unwrap(Dest));
+}
+
+void LLVMAddChoice(LLVMValueRef Choose, LLVMValueRef Weight,
+                   LLVMBasicBlockRef Dest) {
+  unwrap<ChooseInst>(Choose)->addChoice(unwrap<ConstantInt>(Weight),
+                                        unwrap(Dest));
 }
 
 void LLVMAddDestination(LLVMValueRef IndirectBr, LLVMBasicBlockRef Dest) {
