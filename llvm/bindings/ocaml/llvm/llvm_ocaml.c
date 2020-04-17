@@ -1855,7 +1855,7 @@ CAMLprim LLVMValueRef llvm_build_choose(LLVMValueRef Weight,
                                         LLVMBasicBlockRef BB,
                                         value EstimatedCount,
                                         value B) {
-  return LLVMBuildSwitch(Builder_val(B), Weight, BB, Int_val(EstimatedCount));
+  return LLVMBuildChoose(Builder_val(B), Weight, BB, Int_val(EstimatedCount));
 }
 
 /* lltype -> string -> llbuilder -> llvalue */
