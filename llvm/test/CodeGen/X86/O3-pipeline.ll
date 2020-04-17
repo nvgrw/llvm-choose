@@ -52,6 +52,7 @@
 ; CHECK-NEXT:       Dominator Tree Construction
 ; CHECK-NEXT:       Interleaved Access Pass
 ; CHECK-NEXT:       Expand indirectbr instructions
+; CHECK-NEXT:       Lower Choose Instructions
 ; CHECK-NEXT:       Dominator Tree Construction
 ; CHECK-NEXT:       Natural Loop Information
 ; CHECK-NEXT:       CodeGen Prepare
