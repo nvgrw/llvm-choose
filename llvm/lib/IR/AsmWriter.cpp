@@ -3749,6 +3749,23 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeOperand(Case.getCaseSuccessor(), true);
     }
     Out << "\n  ]";
+  } else if (isa<ChooseInst>(I)) {
+    const ChooseInst &CI(cast<ChooseInst>(I));
+    // Special case choose instruction to get formatting nice and correct.
+    Out << ' ';
+    writeOperand(CI.getWeight(), true);
+    Out << ", ";
+    writeOperand(CI.getDefaultDest(), true);
+    Out << " [";
+    for (auto Choice : CI.choices()) {
+      if (Choice.getChoiceIndex() == 0)
+        continue;
+      Out << "\n    ";
+      writeOperand(Choice.getChoiceWeight(), true);
+      Out << ", ";
+      writeOperand(Choice.getChoiceSuccessor(), true);
+    }
+    Out << "\n  ]";
   } else if (isa<IndirectBrInst>(I)) {
     // Special case indirectbr instruction to get formatting nice and correct.
     Out << ' ';

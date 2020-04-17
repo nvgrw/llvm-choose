@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis
+; RUN: llvm-as < %s | llvm-dis | llvm-as | llvm-dis
 ; Check choose statement
 
 define void @test() {
