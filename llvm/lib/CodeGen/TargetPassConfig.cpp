@@ -728,6 +728,7 @@ void TargetPassConfig::addPassesToHandleExceptions() {
 /// Add pass to prepare the LLVM IR for code generation. This should be done
 /// before exception handling preparation passes.
 void TargetPassConfig::addCodeGenPrepare() {
+  addPass(createChooseLoweringPass());
   if (getOptLevel() != CodeGenOpt::None && !DisableCGP)
     addPass(createCodeGenPreparePass());
   addPass(createRewriteSymbolsPass());

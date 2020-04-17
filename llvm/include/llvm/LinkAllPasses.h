@@ -227,6 +227,7 @@ namespace {
       (void) llvm::createWarnMissedTransformationsPass();
       (void) llvm::createHardwareLoopsPass();
       (void)llvm::createInjectTLIMappingsLegacyPass();
+      (void) llvm::createChooseLoweringPass();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::ScalarEvolutionWrapperPass();
