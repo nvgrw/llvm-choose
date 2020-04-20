@@ -29,7 +29,6 @@ namespace {
 /// ChooseLowering - This pass rewrites occurrences of the choose instruction,
 /// replacing them with equivalent switch statements.
 class ChooseLowering : public FunctionPass {
-  FunctionCallee RandomFunction;
 
 public:
   static char ID;
@@ -67,9 +66,6 @@ void ChooseLowering::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool ChooseLowering::doInitialization(Module &M) {
-  LLVMContext &Context = M.getContext();
-  // TODO(nvgrw): figure out a way to provide randomness effectively
-  RandomFunction = M.getOrInsertFunction("_pdcstd_random", Type::getDoubleTy(Context));
   return false;
 }
 
@@ -77,21 +73,25 @@ bool ChooseLowering::runOnFunction(Function &F) {
   bool MadeChange = false;
 
   for (BasicBlock &BB : F) { // for each basic block
-    for (BasicBlock::iterator II = BB.begin(), E = BB.end();
-         II != E;) { // for each instruction
+    for (BasicBlock::iterator II = BB.begin(), E = BB.end(); II != E;) {
+      // for each instruction
       ChooseInst *CI = dyn_cast<ChooseInst>(II++);
       if (!CI)
         continue;
 
-      uint64_t SumOfWeights = 0;
+      uint64_t RandomUpperBound = 0;
       for (auto &Choice : CI->choices()) {
-        SumOfWeights += Choice.getChoiceWeight()->getZExtValue();
+        RandomUpperBound += Choice.getChoiceWeight()->getZExtValue();
       }
 
       IRBuilder<> Builder(CI);
-      Value *RandomValue = Builder.CreateCall(RandomFunction);
-      Value *Cond = Builder.CreateFPToUI(Builder.CreateFMul(RandomValue, ConstantFP::get(Builder.getDoubleTy(), double(SumOfWeights))), Builder.getInt64Ty());
-      SwitchInst *SI = Builder.CreateSwitch(Cond, CI->getDefaultDest(), CI->getNumChoices());
+      const std::vector<Value *> args = {Builder.getInt64(RandomUpperBound)};
+      const std::vector<Type *> args_type;
+      Function *rand_uniform = Intrinsic::getDeclaration(
+          F.getParent(), Intrinsic::rand_uniform, args_type);
+      SwitchInst *SI =
+          Builder.CreateSwitch(Builder.CreateCall(rand_uniform, args),
+                               CI->getDefaultDest(), CI->getNumChoices());
 
       uint64_t WeightCount = 0;
       for (auto &Choice : CI->choices()) {
