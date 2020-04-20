@@ -6736,6 +6736,10 @@ void SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I,
   case Intrinsic::experimental_patchpoint_i64:
     visitPatchpoint(&I);
     return;
+  case Intrinsic::rand_uniform:
+    report_fatal_error("No random number generation strategy available for "
+                       "@llvm.rand.uniform");
+    return;
   case Intrinsic::experimental_gc_statepoint:
     LowerStatepoint(ImmutableStatepoint(&I));
     return;

@@ -1000,6 +1000,10 @@ def int_experimental_patchpoint_i64 : Intrinsic<[llvm_i64_ty],
                                                  llvm_vararg_ty],
                                                  [Throws]>;
 
+//===------------------------- Random Intrinsics --------------------------===//
+//
+def int_rand_uniform : Intrinsic<[llvm_i64_ty], [llvm_i64_ty], []>;
+
 
 //===------------------------ Garbage Collection Intrinsics ---------------===//
 // These are documented in docs/Statepoint.rst
