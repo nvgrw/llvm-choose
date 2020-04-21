@@ -86,7 +86,7 @@ bool ChooseLowering::runOnFunction(Function &F) {
 
       IRBuilder<> Builder(CI);
       const std::vector<Value *> args = {Builder.getInt64(RandomUpperBound)};
-      const std::vector<Type *> args_type;
+      static const std::vector<Type *> args_type;
       Function *rand_uniform = Intrinsic::getDeclaration(
           F.getParent(), Intrinsic::rand_uniform, args_type);
       SwitchInst *SI =
