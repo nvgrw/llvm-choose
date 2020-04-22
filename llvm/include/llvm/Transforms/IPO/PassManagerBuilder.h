@@ -124,6 +124,10 @@ public:
     /// passes that
     /// run at Link Time, after Full Link Time Optimization.
     EP_FullLinkTimeOptimizationLast,
+
+    /// EP_RandomProvider - This extension point allows adding passes
+    /// before any transformations other than Choose Lowering.
+    EP_RandomProvider,
   };
 
   /// The Optimization Level - Specify the basic optimization level.

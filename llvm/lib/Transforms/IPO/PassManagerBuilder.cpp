@@ -279,6 +279,7 @@ void PassManagerBuilder::populateFunctionPassManager(
     legacy::FunctionPassManager &FPM) {
   addExtensionsToPM(EP_EarlyAsPossible, FPM);
   FPM.add(createChooseLoweringPass());
+  addExtensionsToPM(EP_RandomProvider, FPM);
   FPM.add(createEntryExitInstrumenterPass());
 
   // Add LibraryInfo if we have some.

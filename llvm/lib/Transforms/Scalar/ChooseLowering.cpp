@@ -17,7 +17,6 @@
 #include "llvm/PassSupport.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/Module.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Constants.h"
@@ -35,13 +34,11 @@ public:
 
   ChooseLowering();
   StringRef getPassName() const override;
-  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-  bool doInitialization(Module &M) override;
   bool runOnFunction(Function &F) override;
 };
 
-}
+} // anonymous namespace
 
 // -----------------------------------------------------------------------------
 
@@ -58,15 +55,6 @@ ChooseLowering::ChooseLowering() : FunctionPass(ID) {
 
 StringRef ChooseLowering::getPassName() const {
   return "Lower Choose Instructions";
-}
-
-void ChooseLowering::getAnalysisUsage(AnalysisUsage &AU) const {
-  FunctionPass::getAnalysisUsage(AU);
-  // TODO(nvgrw): fill with dependencies
-}
-
-bool ChooseLowering::doInitialization(Module &M) {
-  return false;
 }
 
 bool ChooseLowering::runOnFunction(Function &F) {
