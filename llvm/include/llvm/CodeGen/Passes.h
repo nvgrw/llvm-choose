@@ -466,9 +466,6 @@ namespace llvm {
   /// Create IR Type Promotion pass. \see TypePromotion.cpp
   FunctionPass *createTypePromotionPass();
 
-  // Create IR Choose Lowering pass. \see ChooseLowering.cpp
-  FunctionPass *createChooseLoweringPass();
-
 } // End llvm namespace
 
 #endif

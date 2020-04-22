@@ -527,6 +527,13 @@ Pass *createLoopSimplifyCFGPass();
 // transformations.
 //
 Pass *createWarnMissedTransformationsPass();
+
+
+//===----------------------------------------------------------------------===//
+//
+// Create IR Choose Lowering pass. \see ChooseLowering.cpp
+FunctionPass *createChooseLoweringPass();
+
 } // End llvm namespace
 
 #endif

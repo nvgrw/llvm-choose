@@ -12,7 +12,6 @@ add_llvm_component_library(LLVMCodeGen
   CallingConvLower.cpp
   CFGuardLongjmp.cpp
   CFIInstrInserter.cpp
-  ChooseLowering.cpp
   CodeGen.cpp
   CodeGenPrepare.cpp
   CriticalAntiDepBreaker.cpp

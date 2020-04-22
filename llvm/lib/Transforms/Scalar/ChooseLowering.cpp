@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Pass.h"
-#include "llvm/CodeGen/Passes.h"
 #include "llvm/PassSupport.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/IR/Function.h"
