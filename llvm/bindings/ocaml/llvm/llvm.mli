@@ -268,6 +268,8 @@ module Opcode : sig
   | CatchSwitch
   | FNeg
   | CallBr
+  | Invalid3
+  | Choose
 end
 
 (** The type of a clause of a [landingpad] instruction.

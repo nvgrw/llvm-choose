@@ -246,6 +246,8 @@ module Opcode  = struct
   | CatchSwitch
   | FNeg
   | CallBr
+  | Invalid3
+  | Choose
 end
 
 module LandingPadClauseTy = struct
@@ -1072,7 +1074,7 @@ let is_terminator llv =
   let open ValueKind in
   let open Opcode in
   match classify_value llv with
-    | Instruction (Br | IndirectBr | Invoke | Resume | Ret | Switch | Unreachable)
+    | Instruction (Br | IndirectBr | Invoke | Resume | Ret | Switch | Choose | Unreachable)
       -> true
     | _ -> false
 
