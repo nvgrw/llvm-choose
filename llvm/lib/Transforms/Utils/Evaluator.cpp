@@ -628,7 +628,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
           NextBB = BA->getBasicBlock();
         else
           return false;  // Cannot determine.
-      } else if (isa<ReturnInst>(CurInst)) {
+      } else if (isa<ReturnInst>(CurInst) || isa<ChooseInst>(CurInst)) {
         NextBB = nullptr;
       } else {
         // invoke, unwind, resume, unreachable.
