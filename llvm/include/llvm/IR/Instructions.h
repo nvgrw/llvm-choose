@@ -3559,7 +3559,7 @@ protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
 
-  ChooseInst *closeImpl() const;
+  ChooseInst *cloneImpl() const;
 
 public:
   // -2

@@ -4373,6 +4373,8 @@ BranchInst *BranchInst::cloneImpl() const {
 
 SwitchInst *SwitchInst::cloneImpl() const { return new SwitchInst(*this); }
 
+ChooseInst *ChooseInst::cloneImpl() const { return new ChooseInst(*this); }
+
 IndirectBrInst *IndirectBrInst::cloneImpl() const {
   return new IndirectBrInst(*this);
 }
