@@ -325,8 +325,8 @@ Constant *Evaluator::castCallResultIfNeeded(Value *CallExpr, Constant *RV) {
 /// Evaluate all instructions in block BB, returning true if successful, false
 /// if we can't evaluate it.  NewBB returns the next BB that control flows into,
 /// or null upon return.
-bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
-                              BasicBlock *&NextBB) {
+bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
+                              bool SkipVoidCall) {
   // This is the main evaluation loop.
   while (true) {
     Constant *InstResult = nullptr;
@@ -475,6 +475,8 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
           AI->getType()->getPointerAddressSpace()));
       InstResult = AllocaTmps.back().get();
       LLVM_DEBUG(dbgs() << "Found an alloca. Result: " << *InstResult << "\n");
+    } else if (SkipVoidCall && isa<CallInst>(CurInst) &&
+               cast<CallInst>(CurInst)->getType()->isVoidTy()) {
     } else if (isa<CallInst>(CurInst) || isa<InvokeInst>(CurInst)) {
       CallSite CS(&*CurInst);
 
