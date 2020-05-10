@@ -584,6 +584,11 @@ CAMLprim LLVMTypeRef llvm_x86_mmx_type(LLVMContextRef Context) {
   return LLVMX86MMXTypeInContext(Context);
 }
 
+/* llcontext -> lltype */
+CAMLprim LLVMTypeRef llvm_metadata_type (LLVMContextRef Context) {
+  return LLVMMetadataTypeInContext(Context);
+}
+
 CAMLprim value llvm_type_by_name(LLVMModuleRef M, value Name)
 {
   CAMLparam1(Name);
