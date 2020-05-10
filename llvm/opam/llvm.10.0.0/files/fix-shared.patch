@@ -1,5 +1,5 @@
 diff --git a/cmake/modules/AddOCaml.cmake b/cmake/modules/AddOCaml.cmake
-index 554046b20ed..4e229293c8f 100644
+index 554046b20ed..31b711e1d21 100644
 --- a/cmake/modules/AddOCaml.cmake
 +++ b/cmake/modules/AddOCaml.cmake
 @@ -23,6 +23,10 @@
@@ -44,3 +44,12 @@ index 554046b20ed..4e229293c8f 100644
      get_property(system_libs TARGET LLVMSupport PROPERTY LLVM_SYSTEM_LIBS)
      foreach(system_lib ${system_libs})
        if (system_lib MATCHES "^-")
+@@ -148,7 +163,7 @@ function(add_ocaml_library name)
+   elseif( UNIX )
+     set(ocaml_rpath "\\$ORIGIN/../../../lib${LLVM_LIBDIR_SUFFIX}")
+   endif()
+-  list(APPEND ocaml_flags "-ldopt" "-Wl,-rpath,${ocaml_rpath}")
++  list(APPEND ocaml_flags "-ldopt" "-Wl,-rpath,${ocaml_rpath}" "-ldopt" "-Wl,-rpath,${LLVM_OCAML_EXTERNAL_LLVM_LIBDIR}")
+
+   add_custom_command(
+     OUTPUT ${ocaml_outputs}
