@@ -727,10 +727,6 @@ val label_type : llcontext -> lltype
     context [c]. See [llvm::Type::X86_MMXTy]. *)
 val x86_mmx_type : llcontext -> lltype
 
-(** [metdata_type c] creates a metadata type value in the context [c].
-    See [llvm::Type::MetadataTy]. *)
-val metadata_type : llcontext -> lltype
-
 (** [type_by_name m name] returns the specified type from the current module
     if it exists.
     See the method [llvm::Module::getTypeByName] *)
