@@ -326,7 +326,7 @@ Constant *Evaluator::castCallResultIfNeeded(Value *CallExpr, Constant *RV) {
 /// if we can't evaluate it.  NewBB returns the next BB that control flows into,
 /// or null upon return.
 bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
-                              bool SkipVoidCall) {
+                              bool SkipVoidCall, bool SkipStore) {
   // This is the main evaluation loop.
   while (true) {
     Constant *InstResult = nullptr;
@@ -334,6 +334,11 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
     LLVM_DEBUG(dbgs() << "Evaluating Instruction: " << *CurInst << "\n");
 
     if (StoreInst *SI = dyn_cast<StoreInst>(CurInst)) {
+      if (SkipStore) {
+        ++CurInst;
+        continue;
+      }
+
       if (!SI->isSimple()) {
         LLVM_DEBUG(dbgs() << "Store is not simple! Can not evaluate.\n");
         return false;  // no volatile/atomic accesses.

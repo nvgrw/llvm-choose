@@ -61,7 +61,7 @@ public:
   /// if we can't evaluate it.  NewBB returns the next BB that control flows
   /// into, or null upon return.
   bool EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
-                     bool SkipVoidCall = false);
+                     bool SkipVoidCall = false, bool SkipStore = false);
 
   Constant *getVal(Value *V) {
     if (Constant *CV = dyn_cast<Constant>(V)) return CV;
