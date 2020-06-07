@@ -1,4 +1,4 @@
-; RUN: opt -mtriple=x86_64-- -O2 -debug-pass=Structure < %s -o /dev/null 2>&1 | FileCheck --check-prefixes=CHECK,%llvmcheckext %s 
+; RUN: opt -mtriple=x86_64-- -O2 -debug-pass=Structure < %s -o /dev/null 2>&1 | FileCheck --check-prefixes=CHECK,%llvmcheckext %s
 
 ; REQUIRES: asserts
 
@@ -10,6 +10,7 @@
 ; CHECK-NEXT: Target Library Information
 ; CHECK-NEXT:   FunctionPass Manager
 ; CHECK-NEXT:     Module Verifier
+; CHECK-NEXT:     Lower Choose Instructions
 ; CHECK-EXT:      Good Bye World Pass
 ; CHECK-NOEXT-NOT:      Good Bye World Pass
 ; CHECK-NEXT:     Instrument function entry/exit with calls to e.g. mcount() (pre inlining)
